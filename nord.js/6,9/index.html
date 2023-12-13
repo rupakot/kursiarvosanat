@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Menu</title>
+</head>
+<body>
+
+    <h1>Weekly Menu</h1>
+
+    <form id="menuForm">
+        <label for="day">Select a day:</label>
+        <select id="day" name="day">
+            <option value="maanantai">Monday</option>
+            <option value="tiistai">Tuesday</option>
+            <option value="keskiviikko">Wednesday</option>
+            <option value="torstai">Thursday</option>
+            <option value="perjantai">Friday</option>
+        </select>
+        <button type="button" onclick="fetchMenu()">Fetch Menu</button>
+    </form>
+
+    <div id="menuResult"></div>
+
+    <script src="menu.js"></script>
+</body>
+</html>
