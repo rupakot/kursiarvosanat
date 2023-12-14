@@ -1,95 +1,148 @@
-const fs = require('fs');
-
-function haeKurssinOsallistujatJaArvosanat(kurssi) {
-  fs.readFile('kurssiarvosanat.csv', 'utf8', (err, data) => {
-    if (err) {
-      console.error('Virhe tiedoston lukemisessa:', err);
-      return;
-    }
-    const rivit = data.split('\n');
-    const opiskelijat = [];
-
-    for (let i = 1; i < rivit.length; i++) {
-      const rivi = rivit[i].split(',');
-      const kurssiCsv = rivi[0].replace(/"/g, '');
-      const opiskelija = rivi[1].replace(/"/g, '');
-      const arvosana = rivi[2].replace(/"/g, '');
-
-      if (kurssiCsv === kurssi) {
-        opiskelijat.push({ Opiskelija: opiskelija, Arvosana: arvosana });
-      }
-    }
-
-    if (opiskelijat.length > 0) {
-      console.log(`Kurssin ${kurssi} osallistujien nimet ja arvosanat:`, opiskelijat);
+const readline = require("readline");
+const fs = require("fs");
+const virta = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+virta.question(
+  "Valitse toiminto: \n1. Hae tietyn kurssin kaikkien osallistujien nimet ja arvosanat\n2. Hae tietyn opiskelijan kaikki kurssien nimet ja arvosanat\n3. Hae tietyn opiskelijan arvosana tietyltä kurssilta.\n",
+  function (valinta) {
+    if (valinta === "1") {
+      virta.question("Anna kurssin nimi: ", function (kurssi) {
+        losalistujat(kurssi);
+        virta.close();
+      });
+    } else if (valinta === "2") {
+      virta.question("Anna opiskelijan nimi: ", function (opiskelija) {
+        opiskeliakurssi(opiskelija);
+        virta.close();
+      });
+    } else if (valinta === "3") {
+      virta.question(
+        "Anna opiskelijan nimi ja kurssin nimi erotettuna pilkulla (esim. Maija Meikäläinen,HTML/CSS): ",
+        function (input) {
+          const [opiskelija, kurssi] = input.split(",");
+          löytääNemo(opiskelija, kurssi);
+          virta.close();
+        }
+      );
     } else {
-      console.log(`Kurssia ${kurssi} ei löytynyt`);
+      console.log("Virheellinen valinta.");
+      virta.close();
+    }
+  }
+);
+function losalistujat(kurssi) {
+  fs.readFile("kurssiarvosanat.csv", "utf8", function (err, data) {
+    if (err) {
+      console.log("Tapahtui virhe.");
+    } else {
+      const arvosanat = [];
+ 
+      let rivit = data.split(/\r?\n/);
+ 
+      for (let rivi of rivit) {
+        if (rivi === '"kurssi","opiskelija","arvosana"' || rivi === "") {
+          continue;
+        }
+ 
+        let luettuarvo = rivi.split(",");
+ 
+        let arvosanaOlio = {
+          kurssi: luettuarvo[0].replace(/"/g, ""),
+          opiskelija: luettuarvo[1].replace(/"/g, ""),
+          arvosana: luettuarvo[2].replace(/"/g, ""),
+        };
+        arvosanat.push(arvosanaOlio);
+      }
+      const osallistujat = arvosanat.filter(
+        (arvosana) => arvosana.kurssi.toLowerCase() === kurssi.toLowerCase()
+      );
+      if (osallistujat.length > 0) {
+        console.log(`Kurssin ${kurssi} osallistujat ja arvosanat:`);
+        osallistujat.forEach((arvosana) => {
+          console.log(
+            `Opiskelija: ${arvosana.opiskelija}, Arvosana: ${arvosana.arvosana}`
+          );
+        });
+      } else {
+        console.log("Valitulla kurssilla ei ole osallistujia.");
+      }
     }
   });
 }
-
-
-function haeOpiskelijanKurssitJaArvosanat(opiskelija) {
-  fs.readFile('kurssiarvosanat.csv', 'utf8', (err, data) => {
+function opiskeliakurssi(opiskelija) {
+  fs.readFile("kurssiarvosanat.csv", "utf8", function (err, data) {
     if (err) {
-      console.error('Virhe tiedoston lukemisessa:', err);
-      return;
-    }
-
-    const rivit = data.split('\n');
-    const kurssit = [];
-
-    for (let i = 1; i < rivit.length; i++) {
-      const rivi = rivit[i].split(',');
-      const kurssiCsv = rivi[0].replace(/"/g, '');
-      const opiskelijaCsv = rivi[1].replace(/"/g, '');
-      const arvosana = rivi[2].replace(/"/g, '');
-
-      if (opiskelijaCsv === opiskelija) {
-        kurssit.push({ Kurssi: kurssiCsv, Arvosana: arvosana });
-      }
-    }
-
-    if (kurssit.length > 0) {
-      console.log(`Opiskelijan ${opiskelija} kurssit ja arvosanat:`, kurssit);
+      console.log("Tapahtui virhe.");
     } else {
-      console.log(`Opiskelijaa ${opiskelija} ei löytynyt`);
+      const arvosanat = [];
+ 
+      let rivit = data.split(/\r?\n/);
+ 
+      for (let rivi of rivit) {
+        if (rivi === '"kurssi","opiskelija","arvosana"' || rivi === "") {
+          continue;
+        }
+        let luettuarvo = rivi.split(",");
+        let arvosanaOlio = {
+          kurssi: luettuarvo[0].replace(/"/g, ""),
+          opiskelija: luettuarvo[1].replace(/"/g, ""),
+          arvosana: luettuarvo[2].replace(/"/g, ""),
+        };
+        arvosanat.push(arvosanaOlio);
+      }
+      const opiskelijanKurssit = arvosanat.filter(
+        (arvosana) => arvosana.opiskelija.toLowerCase() === opiskelija.toLowerCase()
+      );
+      if (opiskelijanKurssit.length > 0) {
+        console.log(`Opiskelijan ${opiskelija} kurssit ja arvosanat:`);
+        opiskelijanKurssit.forEach((arvosana) => {
+          console.log(`Kurssi: ${arvosana.kurssi}, Arvosana: ${arvosana.arvosana}`);
+        });
+      } else {
+        console.log("Opiskelijalla ei ole suorituksia.");
+      }
     }
   });
 }
-
-
-function haeOpiskelijanArvosanaKurssilta(opiskelija, kurssi) {
-  fs.readFile('kurssiarvosanat.csv', 'utf8', (err, data) => {
+function löytääNemo(opiskelija, kurssi) {
+  fs.readFile("kurssiarvosanat.csv", "utf8", function (err, data) {
     if (err) {
-      console.error('Virhe tiedoston lukemisessa:', err);
-      return;
-    }
-
-    const rivit = data.split('\n');
-    let arvosana = 'Arvosanaa ei löytynyt';
-
-    for (let i = 1; i < rivit.length; i++) {
-      const rivi = rivit[i].split(',');
-      const kurssiCsv = rivi[0].replace(/"/g, '');
-      const opiskelijaCsv = rivi[1].replace(/"/g, '');
-      const arvosanaCsv = rivi[2].replace(/"/g, '');
-
-      if (opiskelijaCsv === opiskelija && kurssiCsv === kurssi) {
-        arvosana = arvosanaCsv;
-        break;
-      }
-    }
-
-    if (arvosana !== 'Arvosanaa ei löytynyt') {
-      console.log(`Opiskelijan ${opiskelija} arvosana kurssilta ${kurssi}:`, arvosana);
+      console.log("Tapahtui virhe.");
     } else {
-      console.log(`Opiskelijan ${opiskelija} arvosanaa kurssilta ${kurssi} ei löytynyt`);
+      const arvosanat = [];
+ 
+      let rivit = data.split(/\r?\n/);
+ 
+      for (let rivi of rivit) {
+        if (rivi === '"kurssi","opiskelija","arvosana"' || rivi === "") {
+          continue;
+        }
+ 
+        let luettuarvo = rivi.split(",");
+ 
+        let arvosanaOlio = {
+          kurssi: luettuarvo[0].replace(/"/g, ""),
+          opiskelija: luettuarvo[1].replace(/"/g, ""),
+          arvosana: luettuarvo[2].replace(/"/g, ""),
+        };
+        arvosanat.push(arvosanaOlio);
+      }
+ 
+      const opiskelijanArvosana = arvosanat.find(
+        (arvosana) =>
+          arvosana.opiskelija.toLowerCase() === opiskelija.toLowerCase() &&
+          arvosana.kurssi.toLowerCase() === kurssi.toLowerCase()
+      );
+ 
+      if (opiskelijanArvosana) {
+        console.log(
+          `Opiskelijan ${opiskelija} arvosana kurssilta ${kurssi}: ${opiskelijanArvosana.arvosana}`
+        );
+      } else {
+        console.log(`Opiskelijalla ${opiskelija} ei ole arvosanaa kurssilta ${kurssi}.`);
+      }
     }
   });
 }
-
-
-haeKurssinOsallistujatJaArvosanat('HTML/CSS');
-haeOpiskelijanKurssitJaArvosanat('Maija Meikäläinen');
-haeOpiskelijanArvosanaKurssilta('Maija Meikäläinen', 'HTML/CSS');
